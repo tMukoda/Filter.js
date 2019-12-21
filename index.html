@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>filter.js sample</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      video {
+        position: fixed;
+        z-index: 0;
+      }
+
+      canvas {
+        position: fixed;
+        background: #fff;
+        z-index: 10;
+      }
+
+      #button_list{
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 100;
+      }
+
+    
+      ul{
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      li{
+        margin: 0;
+        padding: 0;
+        display: inline-block;
+      }
+
+      button {
+        border: 1px solid #fff;
+        border-radius: 5px;
+        width: 150px;
+        height: 44px;
+        font-size: 1em;
+        line-height: 44px;
+        font-display: sans-serif;
+        font-weight: lighter;
+        position: relative;
+        background: rgba(255, 255, 255, 0.2);
+        text-align: center;
+        color: #fff;
+        margin: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <ul id="button_list">
+      <li>
+        <button id="inverse">反転エフェクト</button>
+      </li>
+      <li>
+        <button id="mono">モノクロエフェクト</button>
+      </li>
+    </ul>
+    <video id="webcam" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="libs/filter.js"></script>
+    <script>
+      $(function() {
+        const filter = new Filter();
+        const video = document.querySelector("#webcam");
+        const canvas = document.querySelector("#canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = screen.width;
+        canvas.height = screen.height;
+
+        let inverseFlag = false;
+        let monoFlag = false;
+
+        // このメソッドを呼び出すことでユーザーにブラウザがカメラを使用することを許可するかの確認ダイアログが表示され、
+        // 許可されれば handleSuccess が呼ばれる
+        navigator.mediaDevices
+          .getUserMedia({
+            video: {
+              // facingMode: "environment",
+              facingMode: "user",
+              width: screen.height,
+              height: screen.width
+            },
+            audio: false
+          })
+          .then(function(mediaStream) {
+            video.srcObject = mediaStream;
+
+            var event = new CustomEvent("camera-init", { stream: stream });
+            window.dispatchEvent(event);
+            // to start the video, when it is possible to start it only on userevent. like in android
+            document.body.addEventListener("click", function() {
+              video.play();
+            });
+
+            var interval = setInterval(function() {
+              if (!video.videoWidth) return;
+              onReady();
+              clearInterval(interval);
+            }, 1000 / 50);
+          })
+          .catch(err => {
+            console.log(JSON.stringify(err));
+          });
+
+        setInterval(function() {
+          //まず、canvasにvideoを描画
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          //canvasのピクセル情報をゲット
+          if (inverseFlag) {
+            imageData = filter.inverse(imageData);
+          }
+          if (monoFlag) {
+            imageData = filter.mono(imageData);
+          }
+          ctx.putImageData(imageData, 0, 0);
+        }, 1000 / 60);
+
+        $("#inverse").on("click", function() {
+          inverseFlag = !inverseFlag;
+        });
+        $("#mono").on("click", function() {
+          monoFlag = !monoFlag;
+        });
+      });
+    </script>
+  </body>
+</html>
