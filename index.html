@@ -67,11 +67,14 @@
       <li>
         <button id="mono">モノクロエフェクト</button>
       </li>
+      <li>
+        <button id="binary">二値化</button>
+      </li>
     </ul>
     <video id="webcam" autoplay muted playsinline></video>
     <canvas id="canvas"></canvas>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="libs/filter.js"></script>
+    <script src="filter.js"></script>
     <script>
       $(function() {
         const filter = new Filter();
@@ -83,6 +86,7 @@
 
         let inverseFlag = false;
         let monoFlag = false;
+        let binaryFlag = false;
 
         // このメソッドを呼び出すことでユーザーにブラウザがカメラを使用することを許可するかの確認ダイアログが表示され、
         // 許可されれば handleSuccess が呼ばれる
@@ -127,6 +131,9 @@
           if (monoFlag) {
             imageData = filter.mono(imageData);
           }
+          if (binaryFlag) {
+            imageData = filter.binarization(imageData,127);
+          }
           ctx.putImageData(imageData, 0, 0);
         }, 1000 / 60);
 
@@ -135,6 +142,9 @@
         });
         $("#mono").on("click", function() {
           monoFlag = !monoFlag;
+        });
+        $("#binary").on("click", function() {
+          binaryFlag = !binaryFlag;
         });
       });
     </script>
